@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 # 功能：twitter用户搜索
 import sys
+
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
@@ -23,6 +24,9 @@ import os
 
 
 class API(object):
+    """
+    设置日志文件的路径
+    """
     # 类变量
     path = os.path.join(path_dir_parent(__file__) + "/data/logging/twitter_search.log")
     value = "('" + path + "', 'a')"
@@ -33,7 +37,16 @@ class API(object):
 
     # 对象变量
     def __init__(self, proxy, keywords):
+        """
+        初始化浏览器选项
+        :param proxy: 代理
+        :param keywords: 搜索关键词
+        """
         self.chrome_options = webdriver.ChromeOptions()
+        # 设置无界面浏览器
+        self.chrome_options.add_argument('--headless')
+        self.chrome_options.add_argument('--disable-gpu')
+        self.chrome_options.add_argument('--no-sandbox')
         self.chrome_options.add_argument('--proxy-server=%s' % proxy)  # 用代理跑driver
         self.driver = webdriver.Chrome(chrome_options=self.chrome_options)
         self.keywords = keywords
@@ -41,9 +54,9 @@ class API(object):
     def login(self, email, pass_word):
         """
         登录函数
-        :param email:
-        :param pass_word:
-        :return:
+        :param email:用户名
+        :param pass_word:密码
+        :return:登陆成功返回true
         """
         login_url = 'https://twitter.com/login/'
         while True:
@@ -72,7 +85,10 @@ class API(object):
                 continue
 
     def search(self):
-
+        """
+        搜索函数 转到搜索页面
+        :return: 成功返回true
+        """
         self.driver.get("https://twitter.com/search?f=users&vertical=news&q=" + self.keywords + "&src=typd")
         # self.driver.find_element_by_class_name('search-input').send_keys(self.keywords)
         # self.driver.find_element_by_class_name('search-icon').click()
@@ -84,8 +100,12 @@ class API(object):
             flag = False
         return flag
 
-    def parse(self, the_tweet_host, the_tweet_database, the_tweet_collection):
-        information_list = [] #返回信息
+    def parse(self):
+        """
+        解析搜索结果
+        :return: 用户名和个人主页的列表
+        """
+        information_list = []  # 返回信息
         try:
             count = 0
             while True:
@@ -96,15 +116,13 @@ class API(object):
                 self.page_down()
             print time.ctime(), "开始采集新的网页......."
             tags = self.driver.find_elements_by_class_name('ProfileCard-userFields')  # 获取当前显示的用户（逐条）
-            # tags = self.driver.find_elements_by_class_name('js-stream-item')  # 获取当前显示的用户（逐条）
             count = len(tags)
             print time.ctime(), 'len_tags:', count
             # 获取每一条的详细信息
             for num in range(0, count):
                 div = tags[num]
                 user_dic = {}
-                # print time.ctime()  # , '\n', 'div:', div
-                #  采集推文相关信息
+                #  采集用户相关信息
                 try:
                     person_details = div.find_element_by_css_selector(
                         ".ProfileCard-screennameLink.u-linkComplex.js-nav")
@@ -127,40 +145,37 @@ class API(object):
 
                 information = 'person_url:', person_url, 'screen_name:', screen_name, 'user_name:', user_name
                 self.logger.info(information)
-                # print 'person_url:', person_url, 'screen_name:', screen_name, 'user_name:', user_name
 
-                # 将数据插入到数据库中
-                # _client.update_data(key_str='id', key=tweet_id, data=tweet_dic)
-                print "**********************************\n"
         except Exception as Err:
             print Err.message, "error......"
         return information_list
 
     def page_down(self):
+        """
+        下拉函数
+        :return:
+        """
         for i in range(3):
             # ActionChains(self.driver).send_keys(Keys.DOWN).perform()
             ActionChains(self.driver).send_keys(Keys.END).perform()  # 拉到底
             wait = randint(3, 10)
             time.sleep(wait)
 
-    def crawler(self, twitter_account, twitter_password, host, database, collection):
-        # user_account = Account()
-        # _account = user_account.collection.find({'alive': {"$exists": False}}).skip(6).limit(1)[0]
-        # account = _account['account']
-        # password = _account['pwd']
+    def crawler(self, twitter_account, twitter_password, host=None, database=None, collection=None):
         page = self.login(twitter_account, twitter_password)  # 尝试登录，登录成功则继续执行
         if page:
             self.search()
-            self.parse(the_tweet_host=host, the_tweet_database=database, the_tweet_collection=collection)
-            self.logger.info("crawler success")
+            result = self.parse()
+            # self.logger.info("crawler success")
             print "crawler success"
+            return result
         else:
-            self.logger.info("login error")
+            # self.logger.info("login error")
             print "login error"
         self.driver.quit()
 
 
-# 链接推文数据库
+# 链接推特用户信息数据库
 class TweetsClient(object):
     def __init__(self, tweet_host, tweet_database, tweet_collection):
         self.client = MongoClient(tweet_host)
@@ -183,5 +198,5 @@ class Account(object):
         self.collection = self.database.get_collection(userCollection)
 
     def get_account(self):
-        account = self.collection.find({}).skip(randint(0, 100)).limit(1)[0]
+        account = self.collection.find({}).skip(randint(0, 70)).limit(1)[0]
         return account['account'], account['pwd']

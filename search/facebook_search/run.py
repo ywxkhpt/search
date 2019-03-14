@@ -2,22 +2,22 @@
 # facebook爬虫
 
 from FacebookSpider import *
+from configure import *
 
 
 def run(name):
-    # 推文数据库
-    tweetHost = 'localhost'
-    tweetDatabase = 'twitter_test'
-    tweetCollection = 'twitter_filter'
     # 待搜索内容
-    # KEYWORDS = 'uestc OR like OR black OR funny OR lucy since:2018-10-01 until:2018-10-03'
+    KEYWORDS = name
+
     # 获取账号
-    # twitter_account = Account()
-    # t_account = twitter_account.get_account()
+    facebook_account = Account()
+    f_account = facebook_account.get_account()
     # 登陆账号采集
-    spider = FacebookSpider(name)
-    result = spider.main()
-    print result
+    spider = FacebookSpider(proxy=PROXY, keywords=KEYWORDS)
+    return spider.main(account=f_account[0],
+                       password=f_account[1])
+    # return spider.main(account=account,
+    #                    password=password)
 
 
 if __name__ == "__main__":

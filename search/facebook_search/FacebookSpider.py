@@ -16,7 +16,6 @@ from selenium.webdriver.common.keys import Keys
 import time
 from selenium.webdriver import ActionChains
 from random import randint
-from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 from configure import *
 from search.util.config_read_util import config_set

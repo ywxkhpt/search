@@ -11,7 +11,7 @@ password = "He19910824_"
 # userHost = 'mongodb://kb314:fzdwxxcl.314@121.49.99.14:30011'
 userHost = "mongodb://%s:%s@%s" % (quote_plus('readAnyDatabase'), quote_plus('Fzdwxxcl.121'), '121.49.99.14:30011')
 userDatabase = 'Account'
-userCollection = ''
+userCollection = 'twitter'
 
 # 脸书用户信息存储数据库
 facebook_host = "mongodb://%s:%s@%s" % ('', '', '121.49.99.14:30011')

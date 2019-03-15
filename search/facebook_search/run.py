@@ -6,6 +6,11 @@ from configure import *
 
 
 def run(name):
+    """
+    运行主函数
+    :param name: 用户名
+    :return: 搜索结果
+    """
     # 待搜索内容
     KEYWORDS = name
 
@@ -14,10 +19,10 @@ def run(name):
     f_account = facebook_account.get_account()
     # 登陆账号采集
     spider = FacebookSpider(proxy=PROXY, keywords=KEYWORDS)
-    return spider.main(account=f_account[0],
-                       password=f_account[1])
-    # return spider.main(account=account,
-    #                    password=password)
+    # return spider.main(account=f_account[0],
+    #                    password=f_account[1])
+    return spider.main(account=account,
+                       password=password)
 
 
 if __name__ == "__main__":

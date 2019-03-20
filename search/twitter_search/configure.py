@@ -14,7 +14,7 @@ userDatabase = 'Account'
 userCollection = 'TwitterAccount2019'
 
 # 推特用户信息存储数据库
-tweet_host = "mongodb://%s:%s@%s" % ('', '', '121.49.99.14:30011')
-# userHost = "mongodb://%s" % (HOST)
-tweet_database = ""
-tweet_collection = ""
+# tweet_host = "mongodb://%s:%s@%s" % ('hepengtao', 'hepengtao319', '121.49.99.14:30011')
+tweet_host = "mongodb://127.0.0.1:27017"
+tweet_database = "twitter_user_tweet"
+tweet_collection = "user"

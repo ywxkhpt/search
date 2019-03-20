@@ -21,6 +21,7 @@ from pymongo import MongoClient
 from search.util.logger_util import log_util
 import logging
 import os
+from search.util.picture_write import twitter_save_to_local,save_to_local
 
 
 class API(object):
@@ -44,9 +45,9 @@ class API(object):
         """
         self.chrome_options = webdriver.ChromeOptions()
         # 设置无界面浏览器
-        self.chrome_options.add_argument('--headless')
-        self.chrome_options.add_argument('--disable-gpu')
-        self.chrome_options.add_argument('--no-sandbox')
+        # self.chrome_options.add_argument('--headless')
+        # self.chrome_options.add_argument('--disable-gpu')
+        # self.chrome_options.add_argument('--no-sandbox')
         self.chrome_options.add_argument('--proxy-server=%s' % proxy)  # 用代理跑driver
         self.driver = webdriver.Chrome(chrome_options=self.chrome_options)
         self.keywords = keywords
@@ -107,44 +108,72 @@ class API(object):
         """
         information_list = []  # 返回信息
         try:
-            count = 0
+            count = 30
+            times = 5
             while True:
-                tags = self.driver.find_elements_by_class_name('ProfileCard-userFields')  # 获取当前显示的用户（逐条）
-                if count == len(tags):
+                tags = self.driver.find_elements_by_class_name('ProfileCard-content')  # 获取当前显示的用户（逐条）
+                if count <= len(tags):
                     break
-                count = len(tags)
+                if times <= 0:
+                    break
+                # count = len(tags)
                 self.page_down()
+                times = times - 1
             print time.ctime(), "开始采集新的网页......."
-            tags = self.driver.find_elements_by_class_name('ProfileCard-userFields')  # 获取当前显示的用户（逐条）
+            tags = self.driver.find_elements_by_class_name('ProfileCard-content')  # 获取当前显示的用户（逐条）
             count = len(tags)
             print time.ctime(), 'len_tags:', count
             # 获取每一条的详细信息
             for num in range(0, count):
                 div = tags[num]
                 user_dic = {}
-                #  采集用户相关信息
+                # 采集头像链接
                 try:
-                    person_details = div.find_element_by_css_selector(
-                        ".ProfileCard-screennameLink.u-linkComplex.js-nav")
+                    span_head_url = div.find_element_by_css_selector(
+                        ".ProfileCard-avatarImage.js-action-profile-avatar")
+                    head_url = span_head_url.get_attribute("src")
+                    print head_url
+                    user_dic["head_url"] = head_url
                 except NoSuchElementException:
-                    continue
-                # 用户的个人主页
-                person_url = person_details.get_attribute('href')
-                # 用户的user_name
-                screen_name = person_details.text
+                    user_dic["head_url"] = None
+                    pass
+                # 用户的个人主页 用户的name
+                try:
+                    span_person_website = div.find_element_by_css_selector(
+                        ".fullname.ProfileNameTruncated-link.u-textInheritColor.js-nav")
+                    person_website = span_person_website.get_attribute("href")
+                    name = span_person_website.text
+                    print person_website
+                    print name
+                    user_dic["person_website"] = person_website
+                    user_dic["name"] = name
+                except NoSuchElementException:
+                    user_dic["person_website"] = None
+                    user_dic["name"] = None
+                    pass
+                # 描述信息
+                try:
+                    span_description = div.find_element_by_css_selector(
+                        ".ProfileCard-bio.u-dir")
+                    description = span_description.text
+                    print description
+                    user_dic["description"] = description
+                except NoSuchElementException:
+                    user_dic["description"] = None
+                    pass
                 # 用户的screen_name
-                span = div.find_element_by_css_selector(
-                    ".fullname.ProfileNameTruncated-link.u-textInheritColor.js-nav")
-                user_name = span.text
-
+                try:
+                    span_screen_name = div.find_element_by_class_name(
+                        "u-linkComplex-target")
+                    screen_name = span_screen_name.text
+                    print screen_name
+                    user_dic["screen_name"] = screen_name
+                except NoSuchElementException:
+                    user_dic["screen_name"] = None
+                    pass
                 # 用户信息
-                user_dic['person_url'] = person_url
-                user_dic['user_name'] = user_name
-                user_dic['screen_name'] = screen_name
                 information_list.append(user_dic)
-
-                information = 'person_url:', person_url, 'screen_name:', screen_name, 'user_name:', user_name
-                self.logger.info(information)
+                self.logger.info("个人信息采集完成")
 
         except Exception as Err:
             print Err.message, "error......"
@@ -184,10 +213,40 @@ class TweetsClient(object):
         self.create_unique_index()
 
     def create_unique_index(self):
-        self.collection.ensure_index([("id", 1)], unique=True)
+        self.collection.ensure_index([("person_website", 1)], unique=True)
 
     def update_data(self, key_str, key, data):  # 根据唯一标示key，更新数据库的内容
         self.collection.update({key_str: key}, {'$set': data}, upsert=True)
+
+    def save_to_database(self, result):
+        """
+        用户信息存储到数据库
+        :return: 插入是否成功
+        """
+        try:
+            # 存储头像图片
+            # 存储用户信息 person_website
+            # 应该要建立索引
+            for item in result:
+                # print item["person_website"]
+                if item["person_website"] is None:
+                    continue
+                image_url = item["head_url"]
+                if image_url is not None:
+                    try:
+                        head_image = save_to_local(image_url)
+                        item["head_image"] = head_image
+                    except Exception:
+                        item["head_image"] = None
+                        pass
+                else:
+                    item["head_image"] = None
+                self.update_data("person_website", item["person_website"], item)
+            flag = True
+        except Exception, e:
+            flag = False
+            pass
+        return flag
 
 
 # 链接推特账户数据库

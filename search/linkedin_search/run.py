@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 
-from LinkedInSpider import LinkedinSpider, Account
+from LinkedInSpider import LinkedinSpider, Account,linkedinClient
 from configure import *
 
 
@@ -20,9 +20,23 @@ def run(name):
     spider = LinkedinSpider(name=KEYWORDS)
     # spider.main(linkedin_account=l_account[0],
     #             linkedin_password=l_account[1])
-    return spider.main(linkedin_account=account,
-                linkedin_password=password)
+    result = spider.main(linkedin_account=account,
+                       linkedin_password=password)
+    # 将信息存储到数据库
+    client = linkedinClient(linkedin_host, linkedin_database, linkedin_collection)
+    flag = client.save_to_database(result)
+    if flag is True:
+        print "插入成功"
+        person_website_list = list()
+        for item in result:
+            person_website = item["person_website"]
+            person_website_list.append(person_website)
+        return person_website_list
+    else:
+        print "插入失败"
+        return None
 
 
 if __name__ == '__main__':
-    run("billor")
+    website_list = run("lucy")
+    print website_list

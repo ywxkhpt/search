@@ -20,6 +20,8 @@ from configure import *
 from search.util.config_read_util import config_set
 from search.util.logger_util import log_util
 from search.util.path_util import path_dir_parent
+from selenium.common.exceptions import NoSuchElementException
+from search.util.picture_write import save_to_local
 
 
 class LinkedinSpider(object):
@@ -40,9 +42,9 @@ class LinkedinSpider(object):
         :param name:
         """
         self.chrome_options = webdriver.ChromeOptions()
-        self.chrome_options.add_argument('--headless')
-        self.chrome_options.add_argument('--disable-gpu')
-        self.chrome_options.add_argument('--no-sandbox')
+        # self.chrome_options.add_argument('--headless')
+        # self.chrome_options.add_argument('--disable-gpu')
+        # self.chrome_options.add_argument('--no-sandbox')
         # self.chrome_options.add_argument('--proxy-server=%s' % PROXY)  # 用代理跑driver
         self.browser = webdriver.Chrome(chrome_options=self.chrome_options)
         self.keywords = name
@@ -85,7 +87,7 @@ class LinkedinSpider(object):
         :return: 用户名 个人主页 用户信息
         """
         try:
-            for i in range(1, 50):
+            for i in range(1, 3):
                 i = str(i)
                 url = "https://www.linkedin.com/search/results/all/?keywords=" + self.keywords + "&page=" + i
                 time.sleep(3)
@@ -95,25 +97,77 @@ class LinkedinSpider(object):
             error = "error:", e.message
             # self.logger.info(error)
             print error
-        # self.logger.info("crawler success")
+        self.logger.info("crawler success")
         print "crawler success"
         return self.information_list
 
     def find_user(self):
         """
-        解析函数 找出用户名 个人主页
+        解析函数 找出用户名 个人主页 个人信息
         :return: 个人信息
         """
-        information = {}
         lis = self.browser.find_elements_by_class_name("search-result__occluded-item")
         self.page_down()
         for li in lis:
-            tag = li.find_element_by_tag_name("a")
-            href = tag.get_attribute("href")
-            information["person_url"] = href
-            span = li.find_element_by_css_selector(".name.actor-name")  # class之间的空格 表示是复合类 可以用这种方式查找
-            name = span.text
-            information["user_name"] = name
+            information = {}
+            # 主页链接
+            try:
+                tag = li.find_element_by_tag_name("a")
+                href = tag.get_attribute("href")
+                information["person_website"] = href
+                print href
+            except NoSuchElementException:
+                information["person_website"] = None
+                pass
+            # 用户名
+            try:
+                span_name = li.find_element_by_css_selector(".name.actor-name")  # class之间的空格 表示是复合类 可以用这种方式查找
+                name = span_name.text
+                information["name"] = name
+                print name
+            except NoSuchElementException:
+                information["name"] = None
+                pass
+            # 职业头衔
+            try:
+                span_title = li.find_element_by_css_selector(
+                    ".subline-level-1.t-14.t-black.t-normal.search-result__truncate")  # class之间的空格 表示是复合类 可以用这种方式查找
+                title = span_title.text
+                information["title"] = title
+                print title
+            except NoSuchElementException:
+                information["title"] = None
+                pass
+            # 地理位置
+            try:
+                span_company_location = li.find_element_by_css_selector(
+                    ".subline-level-2.t-12.t-black--light.t-normal.search-result__truncate")
+                company_location = span_company_location.text
+                information["company_location"] = company_location
+                print company_location
+            except NoSuchElementException:
+                information["company_location"] = None
+                pass
+            # 描述信息
+            try:
+                span_background_summary = li.find_element_by_css_selector(
+                    ".search-result__snippets.mt2.t-12.t-black--light.t-normal")
+                background_summary = span_background_summary.text
+                information["background_summary"] = background_summary
+                print background_summary
+            except NoSuchElementException:
+                information["background_summary"] = None
+                pass
+            # 头像链接
+            try:
+                span_head_url = li.find_element_by_css_selector(
+                    ".lazy-image.ivm-view-attr__img--centered.EntityPhoto-circle-4.presence-entity__image.EntityPhoto-circle-4.loaded")
+                head_url = span_head_url.get_attribute("src")
+                information["head_url"] = head_url
+                print head_url
+            except NoSuchElementException:
+                information["head_url"] = None
+                pass
             self.logger.info(information)
             self.information_list.append(information)
 
@@ -127,12 +181,12 @@ class LinkedinSpider(object):
         wait = randint(3, 5)
         time.sleep(wait)
 
-    def main(self,linkedin_account,linkedin_password):
+    def main(self, linkedin_account, linkedin_password):
         """
         主运行函数
         :return: 搜索结果
         """
-        login = self.login(linkedin_account,linkedin_password)
+        login = self.login(linkedin_account, linkedin_password)
         if login:
             search = self.search()
             return search
@@ -147,10 +201,40 @@ class linkedinClient(object):
         self.create_unique_index()
 
     def create_unique_index(self):
-        self.collection.ensure_index([("id", 1)], unique=True)
+        self.collection.ensure_index([("person_website", 1)], unique=True)
 
     def update_data(self, key_str, key, data):  # 根据唯一标示key，更新数据库的内容
         self.collection.update({key_str: key}, {'$set': data}, upsert=True)
+
+    def save_to_database(self, result):
+        """
+        用户信息存储到数据库
+        :return: 插入是否成功
+        """
+        try:
+            # 存储头像图片
+            # 存储用户信息 person_website
+            # 应该要建立索引
+            for item in result:
+                # print item["person_website"]
+                if item["person_website"] is None:
+                    continue
+                image_url = item["head_url"]
+                if image_url is not None:
+                    try:
+                        head_image = save_to_local(image_url)
+                        item["head_image"] = head_image
+                    except Exception:
+                        item["head_image"] = None
+                        pass
+                else:
+                    item["head_image"] = None
+                self.update_data("person_website", item["person_website"], item)
+            flag = True
+        except Exception, e:
+            flag = False
+            pass
+        return flag
 
 
 # 链接领英账户数据库

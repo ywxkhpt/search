@@ -14,7 +14,7 @@ userDatabase = 'Account'
 userCollection = 'twitter'
 
 # 脸书用户信息存储数据库
-facebook_host = "mongodb://%s:%s@%s" % ('', '', '121.49.99.14:30011')
-# userHost = "mongodb://%s" % (HOST)
-facebook_database = ""
-facebook_collection = ""
+# facebook_host = "mongodb://%s:%s@%s" % ('', '', '121.49.99.14:30011')
+facebook_host = "mongodb://127.0.0.1:27017"
+facebook_database = "facebook"
+facebook_collection = "user"

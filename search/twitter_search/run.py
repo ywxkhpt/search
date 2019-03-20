@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 # 功能：在推特搜索栏输入相应的内容“A”，抓取和“A”想关的用户信息
-from API import API, Account
+from API import API, Account, TweetsClient
 from configure import *
 
 
@@ -18,9 +18,26 @@ def run(name):
     t_account = twitter_account.get_account()
     # 登陆账号采集
     Crawler = API(proxy=PROXY, keywords=KEYWORDS)
-    return Crawler.crawler(twitter_account=t_account[0],
-                           twitter_password=t_account[1])
+    result = Crawler.crawler(twitter_account="hptuestc@gmail.com",
+                             twitter_password="he19910824", host=tweet_host, database=tweet_database,
+                             collection=tweet_collection)
+    # return Crawler.crawler(twitter_account=t_account[0],
+    #                        twitter_password=t_account[1])
+    # 将信息存储到数据库
+    client = TweetsClient(tweet_host, tweet_database, tweet_collection)
+    flag = client.save_to_database(result)
+    if flag is True:
+        print "插入成功"
+        person_website_list = list()
+        for item in result:
+            person_website = item["person_website"]
+            person_website_list.append(person_website)
+        return person_website_list
+    else:
+        print "插入失败"
+        return None
 
 
 if __name__ == "__main__":
-    run('bill')
+    result = run('tom')
+    print result

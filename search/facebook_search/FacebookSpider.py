@@ -22,6 +22,7 @@ from search.util.config_read_util import config_set
 from search.util.logger_util import log_util
 from search.util.path_util import path_dir_parent
 from selenium.webdriver.support import expected_conditions
+from search.util.picture_write import facebook_save_to_local,save_to_local
 
 
 class FacebookSpider(object):
@@ -125,36 +126,74 @@ class FacebookSpider(object):
         """
         information_list = []  # 返回信息
         try:
-            count = 0
+            count = 30
+            times = 5
             while True:
-                tags = self.browser.find_elements_by_class_name('_32mo')  # 获取当前显示的用户（逐条）
-                if count == len(tags):
+                tags = self.browser.find_elements_by_class_name('_4p2o')  # 获取当前显示的用户（逐条）
+                if count <= len(tags):
+                    break
+                if times <= 0:
                     break
                 count = len(tags)
                 self.page_down()
+                times = times - 1
             print time.ctime(), "开始采集新的用户......."
-            tags = self.browser.find_elements_by_class_name('_32mo')  # 获取当前显示的用户（逐条）
+            tags = self.browser.find_elements_by_class_name('_4p2o')  # 获取当前显示的用户（逐条）
             count = len(tags)
             print time.ctime(), 'len_tags:', count
             # 获取每一条的详细信息
             for num in range(0, count):
                 div = tags[num]
                 user_dic = {}
+                # 头像链接
                 try:
-                    # 用户的个人主页
-                    person_url = div.get_attribute("href")
-                    # 用户的user_name
-                    user_name = div.text
+                    span_head_url = div.find_element_by_css_selector("._1glk._6phc.img")
+                    head_url = span_head_url.get_attribute("src")
+                    print head_url
+                    user_dic["head_url"] = head_url
                 except NoSuchElementException:
-                    continue
-
-                # 用户信息
-                user_dic['person_url'] = person_url
-                user_dic['user_name'] = user_name
+                    user_dic["head_url"] = None
+                    pass
+                # _32mo
+                # 用户的个人主页 用户名
+                try:
+                    span_person_website = div.find_element_by_class_name("_32mo")
+                    person_website = span_person_website.get_attribute("href")
+                    name = span_person_website.text
+                    print person_website
+                    print name
+                    user_dic["person_website"] = person_website
+                    user_dic["name"] = name
+                except NoSuchElementException:
+                    user_dic["person_website"] = None
+                    user_dic["name"] = None
+                    pass
+                # 地理位置
+                try:
+                    span_location = div.find_element_by_class_name("_pac")
+                    location = span_location.text
+                    print location
+                    user_dic["location"] = location
+                except NoSuchElementException:
+                    user_dic["location"] = None
+                    pass
+                # 描述信息
+                try:
+                    span__glo = div.find_element_by_class_name("_glo")
+                    span__ajw = span__glo.find_elements_by_class_name("_ajw")
+                    description = ""
+                    for _ajw in span__ajw:
+                        _52eh = _ajw.find_element_by_class_name("_52eh")
+                        # print _52eh.text
+                        description = description + _52eh.text + "\n"
+                    print description
+                    user_dic["description"] = description
+                except NoSuchElementException:
+                    user_dic["description"] = None
+                    pass
                 information_list.append(user_dic)
-
-                information = 'person_url:', person_url, 'user_name:', user_name
-                self.logger.info(information)
+                print "个人信息采集完毕"
+                self.logger.info("个人信息采集完毕")
         except Exception as Err:
             error = "error:", Err.message
             print error
@@ -186,10 +225,39 @@ class facebookClient(object):
         self.create_unique_index()
 
     def create_unique_index(self):
-        self.collection.ensure_index([("id", 1)], unique=True)
+        self.collection.ensure_index([("person_website", 1)], unique=True)
 
-    def update_data(self, key_str, key, data):  # 根据唯一标示key，更新数据库的内容
-        self.collection.update({key_str: key}, {'$set': data}, upsert=True)
+    def update_data(self, key_str, value, data):  # 根据唯一标示key，更新数据库的内容
+        self.collection.update({key_str: value}, {'$set': data}, upsert=True)
+
+    def save_to_database(self, result):
+        """
+        用户信息存储到数据库
+        :return: 插入是否成功
+        """
+        # 存储头像图片
+        # 存储用户信息 person_website
+        # 应该要建立索引
+        try:
+            for item in result:
+                # print item["person_website"]
+                if item["person_website"] is None:
+                    continue
+                image_url = item["head_url"]
+                if image_url is not None:
+                    try:
+                        head_image = facebook_save_to_local(image_url)
+                        item["head_image"] = head_image
+                    except Exception:
+                        item["head_image"] = None
+                else:
+                    item["head_image"] = None
+                self.update_data("person_website", item["person_website"], item)
+            flag = True
+        except Exception, e:
+            flag = False
+            pass
+        return flag
 
 
 # 链接facebook账户数据库

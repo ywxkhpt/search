@@ -55,7 +55,10 @@ class GoogleSpider(object):
         # self.chrome_options.add_argument('--no-sandbox')
         self.chrome_options.add_experimental_option('prefs', prefs)
         self.chrome_options.add_argument('--proxy-server=%s' % proxy)  # 用代理跑driver
-        self.browser = webdriver.Chrome(chrome_options=self.chrome_options)
+        # 需要指定chromedriver的位置
+        self.browser = webdriver.Chrome(executable_path="E://PycharmProjects//webdriver//chromedriver",
+                                        chrome_options=self.chrome_options)
+        # self.browser = webdriver.Chrome(chrome_options=self.chrome_options)
         self.keywords = keywords
 
     def search(self):
@@ -151,7 +154,9 @@ class GoogleSpider(object):
         """
         search = self.search()
         if search:
-            return self.find_user()
+            search_result = self.find_user()
+            self.browser.close()
+            return search_result
 
 
 # 链接google信息数据库

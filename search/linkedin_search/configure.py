@@ -17,5 +17,5 @@ userCollection = 'LinkedInSC'
 # 领英用户信息存储数据库
 # linkedin_host = "mongodb://%s:%s@%s" % ('', '', '121.49.99.14:30011')
 linkedin_host = "mongodb://127.0.0.1:27017"
-linkedin_database = "linkedin"
+linkedin_database = "LinkedIn"
 linkedin_collection = "user_information"

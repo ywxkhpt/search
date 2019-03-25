@@ -2,6 +2,7 @@
 
 from LinkedInSpider import LinkedinSpider, Account,linkedinClient
 from configure import *
+from get_linked_data import get_data
 
 
 def run(name):
@@ -31,7 +32,8 @@ def run(name):
         for item in result:
             person_website = item["person_website"]
             person_website_list.append(person_website)
-        return person_website_list
+        data = get_data(person_websites=person_website_list)
+        return data
     else:
         print "插入失败"
         return None

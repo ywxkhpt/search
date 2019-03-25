@@ -3,7 +3,7 @@
 
 from GoogleSpider import *
 from configure import *
-
+from get_google_data import get_data
 
 def run(name):
     """
@@ -33,12 +33,13 @@ def run(name):
         for item in result:
             person_website = item["webpage_url"]
             person_website_list.append(person_website)
-        return person_website_list
+        website_list = person_website_list
+        return get_data(webpage_urls=website_list)
     else:
         print "插入失败"
         return None
 
 
 if __name__ == "__main__":
-    result = run('mike')
+    result = run('bill')
     print result

@@ -21,7 +21,7 @@ from search.util.config_read_util import config_set
 from search.util.logger_util import log_util
 from search.util.path_util import path_dir_parent
 from selenium.common.exceptions import NoSuchElementException
-from search.util.picture_write import save_to_local
+from search.util.picture_write import linkedin_save_to_local
 
 
 class LinkedinSpider(object):
@@ -46,7 +46,10 @@ class LinkedinSpider(object):
         # self.chrome_options.add_argument('--disable-gpu')
         # self.chrome_options.add_argument('--no-sandbox')
         # self.chrome_options.add_argument('--proxy-server=%s' % PROXY)  # 用代理跑driver
-        self.browser = webdriver.Chrome(chrome_options=self.chrome_options)
+        # 需要指定chromedriver的位置
+        self.browser = webdriver.Chrome(executable_path="E://PycharmProjects//webdriver//chromedriver",
+                                        chrome_options=self.chrome_options)
+        # self.browser = webdriver.Chrome(chrome_options=self.chrome_options)
         self.keywords = name
         self.information_list = []
 
@@ -189,6 +192,7 @@ class LinkedinSpider(object):
         login = self.login(linkedin_account, linkedin_password)
         if login:
             search = self.search()
+            self.browser.close()
             return search
 
 
@@ -222,7 +226,7 @@ class linkedinClient(object):
                 image_url = item["head_url"]
                 if image_url is not None:
                     try:
-                        head_image = save_to_local(image_url)
+                        head_image = linkedin_save_to_local(image_url)
                         item["head_image"] = head_image
                     except Exception:
                         item["head_image"] = None

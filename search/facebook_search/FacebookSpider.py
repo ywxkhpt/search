@@ -22,7 +22,7 @@ from search.util.config_read_util import config_set
 from search.util.logger_util import log_util
 from search.util.path_util import path_dir_parent
 from selenium.webdriver.support import expected_conditions
-from search.util.picture_write import facebook_save_to_local,save_to_local
+from search.util.picture_write import facebook_save_to_local, save_to_local
 
 
 class FacebookSpider(object):
@@ -56,7 +56,10 @@ class FacebookSpider(object):
         # self.chrome_options.add_argument('--no-sandbox')
         self.chrome_options.add_experimental_option('prefs', prefs)
         self.chrome_options.add_argument('--proxy-server=%s' % proxy)  # 用代理跑driver
-        self.browser = webdriver.Chrome(chrome_options=self.chrome_options)
+        # 需要指定chromedriver的位置
+        self.browser = webdriver.Chrome(executable_path="E://PycharmProjects//webdriver//chromedriver",
+                                        chrome_options=self.chrome_options)
+        # self.browser = webdriver.Chrome(chrome_options=self.chrome_options)
         self.keywords = keywords
 
     def login(self, email, password):
@@ -213,10 +216,12 @@ class FacebookSpider(object):
         if login:
             search = self.search()
             if search:
-                return self.find_user()
+                user_information = self.find_user()
+                self.browser.close()
+                return user_information
 
 
-# 链接facebook用户信息数据库
+            # 链接facebook用户信息数据库
 class facebookClient(object):
     def __init__(self, facebook_host, facebook_database, facebook_collection):
         self.client = MongoClient(facebook_host)

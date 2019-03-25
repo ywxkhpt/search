@@ -29,10 +29,11 @@ def facebook_save_to_local(image_url):
     """
     proxies = {'http': 'http://kb111.asuscomm.com:8118', 'https': 'https://kb111.asuscomm.com:8118'}
     image = requests.get(image_url, proxies=proxies, verify=False)
-    file_name = save_dir + "\\" + str(uuid.uuid1()).replace('-', '') + '.jpg'
+    file_name = save_dir + "\\facebook\\" + str(uuid.uuid1()).replace('-', '') + '.jpg'
     with open("%s" % file_name, 'wb') as file:
         file.write(image.content)
     return file_name
+
 
 def twitter_save_to_local(image_url):
     """
@@ -41,8 +42,22 @@ def twitter_save_to_local(image_url):
     :return: 图片存储路径
     """
     proxies = {'http': 'http://kb111.asuscomm.com:8118', 'https': 'http://kb111.asuscomm.com:8118'}
-    image = requests.get(image_url, proxies=proxies, verify=False)
-    file_name = save_dir + "\\" + str(uuid.uuid1()).replace('-', '') + '.jpg'
+    image = requests.get(image_url,proxies=proxies, verify=False)
+    file_name = save_dir + "\\twitter\\" + str(uuid.uuid1()).replace('-', '') + '.jpg'
+    with open("%s" % file_name, 'wb') as file:
+        file.write(image.content)
+    return file_name
+
+
+def linkedin_save_to_local(image_url):
+    """
+    文件存储到本地
+    :param image_url: 图片地址
+    :return: 图片存储路径
+    """
+    # proxies = {'http': 'http://kb111.asuscomm.com:8118', 'https': 'http://kb111.asuscomm.com:8118'}
+    image = requests.get(image_url)
+    file_name = save_dir + "\\linkedin\\" + str(uuid.uuid1()).replace('-', '') + '.jpg'
     with open("%s" % file_name, 'wb') as file:
         file.write(image.content)
     return file_name

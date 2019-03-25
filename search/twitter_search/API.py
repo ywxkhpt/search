@@ -21,7 +21,7 @@ from pymongo import MongoClient
 from search.util.logger_util import log_util
 import logging
 import os
-from search.util.picture_write import twitter_save_to_local,save_to_local
+from search.util.picture_write import twitter_save_to_local
 
 
 class API(object):
@@ -49,7 +49,10 @@ class API(object):
         # self.chrome_options.add_argument('--disable-gpu')
         # self.chrome_options.add_argument('--no-sandbox')
         self.chrome_options.add_argument('--proxy-server=%s' % proxy)  # 用代理跑driver
-        self.driver = webdriver.Chrome(chrome_options=self.chrome_options)
+        # 需要指定chromedriver的位置
+        self.driver = webdriver.Chrome(executable_path="E://PycharmProjects//webdriver//chromedriver",
+                                        chrome_options=self.chrome_options)
+        # self.driver = webdriver.Chrome(chrome_options=self.chrome_options)
         self.keywords = keywords
 
     def login(self, email, pass_word):
@@ -197,11 +200,13 @@ class API(object):
             result = self.parse()
             # self.logger.info("crawler success")
             print "crawler success"
+            self.driver.close()
             return result
         else:
             # self.logger.info("login error")
+            self.driver.close()
             print "login error"
-        self.driver.quit()
+
 
 
 # 链接推特用户信息数据库
@@ -233,8 +238,9 @@ class TweetsClient(object):
                     continue
                 image_url = item["head_url"]
                 if image_url is not None:
+                    # print image_url
                     try:
-                        head_image = save_to_local(image_url)
+                        head_image = twitter_save_to_local(image_url)
                         item["head_image"] = head_image
                     except Exception:
                         item["head_image"] = None
@@ -244,6 +250,7 @@ class TweetsClient(object):
                 self.update_data("person_website", item["person_website"], item)
             flag = True
         except Exception, e:
+            print "下载图片出错"
             flag = False
             pass
         return flag

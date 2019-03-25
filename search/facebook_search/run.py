@@ -3,6 +3,7 @@
 
 from FacebookSpider import *
 from configure import *
+from get_facebook_data import get_data
 
 
 def run(name):
@@ -22,7 +23,7 @@ def run(name):
     # return spider.main(account=f_account[0],
     #                    password=f_account[1])
     result = spider.main(account=account,
-                       password=password)
+                         password=password)
     # 将信息存储到数据库
     client = facebookClient(facebook_host, facebook_database, facebook_collection)
     flag = client.save_to_database(result)
@@ -32,11 +33,13 @@ def run(name):
         for item in result:
             person_website = item["person_website"]
             person_website_list.append(person_website)
-        return person_website_list
+        data = get_data(person_websites=person_website_list)
+        return data
     else:
         print "插入失败"
         return None
 
 
 if __name__ == "__main__":
-    run('mike')
+    result = run('jim')
+    print result

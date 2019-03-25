@@ -2,6 +2,7 @@
 # 功能：在推特搜索栏输入相应的内容“A”，抓取和“A”想关的用户信息
 from API import API, Account, TweetsClient
 from configure import *
+from get_twitter_data import get_data
 
 
 def run(name):
@@ -30,9 +31,11 @@ def run(name):
         print "插入成功"
         person_website_list = list()
         for item in result:
-            person_website = item["person_website"]
+            person_website = item["screen_name"]
             person_website_list.append(person_website)
-        return person_website_list
+        print person_website_list
+        data = get_data(screen_name_list=person_website_list)
+        return data
     else:
         print "插入失败"
         return None

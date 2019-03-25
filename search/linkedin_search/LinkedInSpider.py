@@ -90,7 +90,7 @@ class LinkedinSpider(object):
         :return: 用户名 个人主页 用户信息
         """
         try:
-            for i in range(1, 3):
+            for i in range(1, 6):
                 i = str(i)
                 url = "https://www.linkedin.com/search/results/all/?keywords=" + self.keywords + "&page=" + i
                 time.sleep(3)

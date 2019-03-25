@@ -42,5 +42,5 @@ def run(name):
 
 
 if __name__ == "__main__":
-    result = run('tom')
+    result = run('allen')
     print result

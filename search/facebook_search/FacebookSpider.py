@@ -129,7 +129,7 @@ class FacebookSpider(object):
         """
         information_list = []  # 返回信息
         try:
-            count = 30
+            count = 50
             times = 5
             while True:
                 tags = self.browser.find_elements_by_class_name('_4p2o')  # 获取当前显示的用户（逐条）

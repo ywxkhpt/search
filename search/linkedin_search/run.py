@@ -40,5 +40,5 @@ def run(name):
 
 
 if __name__ == '__main__':
-    website_list = run("lucy")
+    website_list = run("allen")
     print website_list

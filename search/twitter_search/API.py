@@ -200,11 +200,17 @@ class API(object):
             result = self.parse()
             # self.logger.info("crawler success")
             print "crawler success"
-            self.driver.close()
+            try:
+                self.driver.close()
+            except Exception:
+                pass
             return result
         else:
             # self.logger.info("login error")
-            self.driver.close()
+            try:
+                self.driver.close()
+            except Exception:
+                pass
             print "login error"
 
 
